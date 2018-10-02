@@ -1,3 +1,4 @@
+// Package bob provides Bobs responses
 package bob
 
 import (
