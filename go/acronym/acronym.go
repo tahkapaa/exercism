@@ -1,3 +1,4 @@
+// package acronym converts names to acronyms.
 package acronym
 
 import (
