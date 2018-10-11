@@ -47,37 +47,80 @@ Db to E). There are also smaller and larger intervals, but they will not
 figure into this exercise.*/
 package scale
 
+import (
+	"fmt"
+	"strings"
+)
+
+// Available scale expressions
 var (
 	sharpChromatic = []string{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"}
 	flatChromatic  = []string{"F", "Gb", "G", "Ab", "A", "Bb", "B", "C", "Db", "D", "Eb", "E"}
 )
 
 // Scale generates a musical scale starting with the given tonic and following the specified
-// interval pattern, where m stands for half step, M for full step. For example:
-// tonic = "C", interval="MMmMMMm" -> ["C", "D", "E", "F", "G", "A", "B"]
+// interval pattern, where 'm' stands for half step, 'M' for full step and 'A' for augmented
+// step. For example: tonic = "C", interval="MMmMMMm" -> ["C", "D", "E", "F", "G", "A", "B"]
+// If no interval is given, the full scale is returned.
 func Scale(tonic, interval string) []string {
-	if tonic == "C" {
-		if interval == "" {
-			return sharpChromatic
-		}
-
-		scale := sharpChromatic[:1]
-		index := 0
-		for _, r := range interval {
-			index++
-			if r == 'M' {
-				index++
-			}
-
-			if index >= len(sharpChromatic) {
-				index -= len(sharpChromatic)
-			}
-
-			if !(len(scale) >= 7) {
-				scale = append(scale, sharpChromatic[index])
-			}
-		}
-		return scale
+	// Select scale
+	chromatic := sharpChromatic
+	if !useSharps(tonic) {
+		chromatic = flatChromatic
 	}
-	return flatChromatic
+
+	// Find the tone to start with
+	tonic = strings.ToUpper(tonic[:1]) + tonic[1:]
+	index := findToneIndex(chromatic, tonic)
+	if index == -1 {
+		panic(fmt.Errorf("Invalid tone '%v' not in '%v'", tonic, chromatic))
+	}
+
+	return generateScale(chromatic, index, interval)
+}
+
+var noSharpsOrFlats = map[string]bool{
+	"C": true, "a": true,
+}
+
+var sharps = map[string]bool{
+	"G": true, "D": true, "A": true, "E": true, "B": true, "F#": true,
+	"e": true, " b": true, "f#": true, "c#": true, "g#": true, "d#": true,
+}
+
+func useSharps(tonic string) bool {
+	return noSharpsOrFlats[tonic] || sharps[tonic]
+}
+
+func findToneIndex(chromatic []string, tone string) int {
+	for i, v := range chromatic {
+		if v == tone {
+			return i
+		}
+	}
+	return -1
+}
+
+func generateScale(chromatic []string, toneDelta int, interval string) []string {
+	var scale []string
+	intervalIndex := 0
+	for i := 0; i < len(chromatic); i++ {
+		// Normalize the index to the amount of pitches.
+		index := (i + toneDelta) % 12
+
+		scale = append(scale, chromatic[index])
+
+		// Calculate next pitch according to interval
+		if len(interval) > intervalIndex {
+			if interval[intervalIndex] == 'M' {
+				// Major step - skip one pitch
+				i++
+			} else if interval[intervalIndex] == 'A' {
+				// Augmented first - skip two pitches
+				i += 2
+			}
+			intervalIndex++
+		}
+	}
+	return scale
 }
