@@ -20,13 +20,13 @@ type Kind int
 
 const (
 	// NaT is not a triangle
-	NaT = -1
+	NaT = iota
 	// Equ is equilateral triangle
-	Equ = 3
+	Equ
 	// Iso is an isosceles triangle
-	Iso = 1
+	Iso
 	// Sca is a scalene triangle
-	Sca = 0
+	Sca
 )
 
 // KindFromSides determines the type of the given triangle
@@ -44,16 +44,12 @@ func KindFromSides(a, b, c float64) Kind {
 		return NaT
 	}
 
-	var equalSides Kind
-	if a == b {
-		equalSides++
+	if a == b && b == c {
+		return Equ
 	}
-	if b == c {
-		equalSides++
-	}
-	if c == a {
-		equalSides++
+	if a == b || b == c || a == c {
+		return Iso
 	}
 
-	return equalSides
+	return Sca
 }
